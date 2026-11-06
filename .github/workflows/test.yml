@@ -1,0 +1,26 @@
+name: Nexo Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write response
+        run: |
+          echo '{"response":"Hello from GitHub Actions"}' > response.json
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add response.json
+
+          git commit -m "Update response" || exit 0
+
+          git push
