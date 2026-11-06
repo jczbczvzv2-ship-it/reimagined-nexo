@@ -1,0 +1,53 @@
+name: Nexo AI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ai:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Call OpenRouter
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          curl https://openrouter.ai/api/v1/chat/completions \
+            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "model":"deepseek/deepseek-chat",
+              "messages":[
+                {
+                  "role":"user",
+                  "content":"Hello from Nexo"
+                }
+              ]
+            }' > result.json
+
+      - name: Extract Response
+        run: |
+          python3 - << 'EOF'
+          import json
+
+          with open("result.json","r") as f:
+              data=json.load(f)
+
+          reply=data["choices"][0]["message"]["content"]
+
+          with open("response.json","w") as f:
+              json.dump({"response":reply},f)
+          EOF
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add response.json
+
+          git commit -m "AI response update" || true
+
+          git push
