@@ -1,4 +1,4 @@
-name: Nexo AI
+name: Test OpenRouter
 
 on:
   workflow_dispatch:
@@ -8,9 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Check Secret Exists
+      - name: Test Secret
         run: |
           if [ -z "${{ secrets.OPENROUTER_API_KEY }}" ]; then
             echo "SECRET MISSING"
@@ -19,7 +17,7 @@ jobs:
             echo "SECRET FOUND"
           fi
 
-      - name: Call OpenRouter
+      - name: Ask OpenRouter
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
@@ -31,11 +29,7 @@ jobs:
               "messages":[
                 {
                   "role":"user",
-                  "content":"Hello from Nexo"
+                  "content":"Hello"
                 }
               ]
-            }' > result.json
-
-      - name: Print API Response
-        run: |
-          cat result.json
+            }'
