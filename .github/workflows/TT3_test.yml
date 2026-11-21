@@ -13,60 +13,58 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Read Model Settings
-        run: |
-          python3 << 'EOF'
-          import json
-
-          with open("model.json","r") as f:
-              data = json.load(f)
-
-          with open("selected_model.txt","w") as f:
-              f.write(data["model"])
-
-          with open("prompt.txt","w") as f:
-              f.write(data["prompt"])
-          EOF
-
-      - name: Ask OpenRouter
+      - name: Ask Multiple Models
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEYS }}
         run: |
-          MODEL=$(cat selected_model.txt)
-          PROMPT=$(cat prompt.txt)
-
-          curl https://openrouter.ai/api/v1/chat/completions \
-            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"model\":\"$MODEL\",
-              \"messages\":[
-                {
-                  \"role\":\"system\",
-                  \"content\":\"You are Nexo AI. Nexo is an AI assistant and not a cryptocurrency company.\"
-                },
-                {
-                  \"role\":\"user\",
-                  \"content\":\"$PROMPT\"
-                }
-              ]
-            }" > result.json
-
-      - name: Save Response
-        run: |
           python3 << 'EOF'
+          import requests
           import json
+          import os
 
-          with open("result.json","r") as f:
-              data = json.load(f)
+          api_key = os.environ["OPENROUTER_API_KEY"]
 
-          reply = data["choices"][0]["message"]["content"]
+          models = {
+              "DeepSeek": "deepseek/deepseek-chat",
+              "Gemini": "google/gemini-2.5-flash",
+              "GPT": "openai/gpt-4o-mini"
+          }
 
-          with open("response.json","w") as f:
-              json.dump({
-                  "model": data["model"],
-                  "response": reply
-              }, f, indent=2)
+          results = {}
+
+          for name, model in models.items():
+              response = requests.post(
+                  "https://openrouter.ai/api/v1/chat/completions",
+                  headers={
+                      "Authorization": f"Bearer {api_key}",
+                      "Content-Type": "application/json"
+                  },
+                  json={
+                      "model": model,
+                      "messages": [
+                          {
+                              "role": "system",
+                              "content": "You are Nexo AI."
+                          },
+                          {
+                              "role": "user",
+                              "content": "Who are you?"
+                          }
+                      ]
+                  }
+              )
+
+              data = response.json()
+
+              try:
+                  results[name] = data["choices"][0]["message"]["content"]
+              except:
+                  results[name] = str(data)
+
+          with open("response.json", "w") as f:
+              json.dump(results, f, indent=2)
+
+          print(json.dumps(results, indent=2))
           EOF
 
       - name: Commit Response
@@ -75,5 +73,5 @@ jobs:
           git config user.email "actions@github.com"
 
           git add response.json
-          git commit -m "Nexo AI response" || true
+          git commit -m "Multi model test" || true
           git push
