@@ -1,0 +1,79 @@
+name: Nexo MultiModel Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ai:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read Model Settings
+        run: |
+          python3 << 'EOF'
+          import json
+
+          with open("model.json","r") as f:
+              data = json.load(f)
+
+          with open("selected_model.txt","w") as f:
+              f.write(data["model"])
+
+          with open("prompt.txt","w") as f:
+              f.write(data["prompt"])
+          EOF
+
+      - name: Ask OpenRouter
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEYS }}
+        run: |
+          MODEL=$(cat selected_model.txt)
+          PROMPT=$(cat prompt.txt)
+
+          curl https://openrouter.ai/api/v1/chat/completions \
+            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"model\":\"$MODEL\",
+              \"messages\":[
+                {
+                  \"role\":\"system\",
+                  \"content\":\"You are Nexo AI. Nexo is an AI assistant and not a cryptocurrency company.\"
+                },
+                {
+                  \"role\":\"user\",
+                  \"content\":\"$PROMPT\"
+                }
+              ]
+            }" > result.json
+
+      - name: Save Response
+        run: |
+          python3 << 'EOF'
+          import json
+
+          with open("result.json","r") as f:
+              data = json.load(f)
+
+          reply = data["choices"][0]["message"]["content"]
+
+          with open("response.json","w") as f:
+              json.dump({
+                  "model": data["model"],
+                  "response": reply
+              }, f, indent=2)
+          EOF
+
+      - name: Commit Response
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add response.json
+          git commit -m "Nexo AI response" || true
+          git push
