@@ -1,4 +1,4 @@
-name: Nexo MultiModel Test
+name: Nexo Multi AI Test
 
 on:
   workflow_dispatch:
@@ -13,58 +13,91 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Ask Multiple Models
+      - name: Ask All Models
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEYS }}
+          GEMINI_API_KEY: ${{ secrets.GEM }}
         run: |
           python3 << 'EOF'
           import requests
           import json
           import os
 
-          api_key = os.environ["OPENROUTER_API_KEY"]
-
-          models = {
-              "DeepSeek": "deepseek/deepseek-chat",
-              "Gemini": "google/gemini-2.5-flash",
-              "GPT": "openai/gpt-4o-mini"
-          }
-
           results = {}
 
-          for name, model in models.items():
-              response = requests.post(
+          # DeepSeek
+          try:
+              r = requests.post(
                   "https://openrouter.ai/api/v1/chat/completions",
                   headers={
-                      "Authorization": f"Bearer {api_key}",
+                      "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
                       "Content-Type": "application/json"
                   },
                   json={
-                      "model": model,
-                      "messages": [
+                      "model":"deepseek/deepseek-chat",
+                      "messages":[
+                          {"role":"system","content":"You are Nexo AI."},
+                          {"role":"user","content":"Who are you?"}
+                      ]
+                  }
+              )
+              data = r.json()
+              results["DeepSeek"] = data["choices"][0]["message"]["content"]
+          except Exception as e:
+              results["DeepSeek"] = str(e)
+
+          # GPT
+          try:
+              r = requests.post(
+                  "https://openrouter.ai/api/v1/chat/completions",
+                  headers={
+                      "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
+                      "Content-Type": "application/json"
+                  },
+                  json={
+                      "model":"openai/gpt-4o-mini",
+                      "messages":[
+                          {"role":"system","content":"You are Nexo AI."},
+                          {"role":"user","content":"Who are you?"}
+                      ]
+                  }
+              )
+              data = r.json()
+              results["GPT"] = data["choices"][0]["message"]["content"]
+          except Exception as e:
+              results["GPT"] = str(e)
+
+          # Gemini
+          try:
+              r = requests.post(
+                  f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={os.environ['GEMINI_API_KEY']}",
+                  headers={
+                      "Content-Type": "application/json"
+                  },
+                  json={
+                      "contents":[
                           {
-                              "role": "system",
-                              "content": "You are Nexo AI."
-                          },
-                          {
-                              "role": "user",
-                              "content": "Who are you?"
+                              "parts":[
+                                  {
+                                      "text":"Who are you?"
+                                  }
+                              ]
                           }
                       ]
                   }
               )
 
-              data = response.json()
+              data = r.json()
 
-              try:
-                  results[name] = data["choices"][0]["message"]["content"]
-              except:
-                  results[name] = str(data)
+              results["Gemini"] = data["candidates"][0]["content"]["parts"][0]["text"]
 
-          with open("response.json", "w") as f:
-              json.dump(results, f, indent=2)
+          except Exception as e:
+              results["Gemini"] = str(e)
 
-          print(json.dumps(results, indent=2))
+          with open("response.json","w") as f:
+              json.dump(results,f,indent=2)
+
+          print(json.dumps(results,indent=2))
           EOF
 
       - name: Commit Response
@@ -73,5 +106,5 @@ jobs:
           git config user.email "actions@github.com"
 
           git add response.json
-          git commit -m "Multi model test" || true
+          git commit -m "Update multi-model responses" || true
           git push
