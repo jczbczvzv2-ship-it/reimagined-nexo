@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Test Secret
         run: |
-          if [ -z "${{ secrets.OPENROUTER_API_KEY }}" ]; then
+          if [ -z "${{ secrets.OPENROUTER_API_KEYS }}" ]; then
             echo "SECRET MISSING"
             exit 1
           else
@@ -19,7 +19,7 @@ jobs:
 
       - name: Ask OpenRouter
         env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEYS }}
         run: |
           curl https://openrouter.ai/api/v1/chat/completions \
             -H "Authorization: Bearer $OPENROUTER_API_KEY" \
