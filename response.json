@@ -1,5 +1,5 @@
 {
-  "DeepSeek": "I\u2019m Nexo AI, your intelligent assistant here to help with answers, insights, and creative ideas. Think of me as your digital companion\u2014ready to assist with information, problem-solving, or even just a fun chat. Whether you need research, productivity tips, or entertainment, I\u2019m here for you!  \n\nHow can I help you today? \ud83d\ude0a",
-  "Gemini": "{'error': {'message': \"This request requires more credits, or fewer max_tokens. You requested up to 65535 tokens, but can only afford 15923. To increase, visit https://openrouter.ai/workspaces/default/keys/d63d3c44c971b87acb44b8f819f2364091225ac3cd7dbb7950dfe717e711a2a8 and adjust the key's daily limit\", 'code': 402, 'metadata': {'limit_source': 'openrouter_credits', 'remedy_hint': 'Add credits at https://openrouter.ai/settings/credits, or lower max_tokens / prompt size to fit your remaining balance.', 'provider_name': None}}, 'user_id': 'user_3MPVSAPANp8aAijoA3xBTbFBwxb'}",
-  "GPT": "I am Nexo AI, a virtual assistant designed to provide information and answer questions on a wide range of topics. How can I assist you today?"
+  "DeepSeek": "I\u2019m Nexo AI, your virtual assistant here to help with information, answer questions, and assist with anything from general knowledge to productivity tasks. Think of me as a friendly, AI-powered guide\u2014here to make your day easier! \n\nNeed directions, insights, or just curious about something? I'm happy to assist. \ud83d\ude0a How can I help you today?",
+  "GPT": "I am Nexo AI, a virtual assistant designed to provide information and answer questions across a wide range of topics. How can I assist you today?",
+  "Gemini": "'candidates'"
 }
