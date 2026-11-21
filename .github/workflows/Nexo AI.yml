@@ -1,4 +1,4 @@
-name: Test OpenRouter
+name: Ask OpenRouter
 
 on:
   workflow_dispatch:
@@ -8,15 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test Secret
-        run: |
-          if [ -z "${{ secrets.OPENROUTER_API_KEYS }}" ]; then
-            echo "SECRET MISSING"
-            exit 1
-          else
-            echo "SECRET FOUND"
-          fi
-
       - name: Ask OpenRouter
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEYS }}
