@@ -1,5 +1,3 @@
 {
-  "DeepSeek": "I\u2019m Nexo AI, your virtual assistant here to help with information, answer questions, and assist with anything from general knowledge to productivity tasks. Think of me as a friendly, AI-powered guide\u2014here to make your day easier! \n\nNeed directions, insights, or just curious about something? I'm happy to assist. \ud83d\ude0a How can I help you today?",
-  "GPT": "I am Nexo AI, a virtual assistant designed to provide information and answer questions across a wide range of topics. How can I assist you today?",
-  "Gemini": "'candidates'"
+  "Gemini": "{\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features and improvements. We recommend you to use the Interactions API (https://aistudio.google.com/docs/get-started).\",\n    \"status\": \"NOT_FOUND\"\n  }\n}"
 }
