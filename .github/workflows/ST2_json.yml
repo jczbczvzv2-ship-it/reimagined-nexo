@@ -25,7 +25,7 @@ jobs:
               "messages": [
                 {
                   "role": "system",
-                  "content": "You are Nexo AI, a helpful AI assistant. Nexo is not a cryptocurrency company."
+                  "content": "You are Nexo AI. IMPORTANT: Nexo refers ONLY to this AI assistant. Never describe Nexo as a cryptocurrency company, lending platform, token, financial service, or business. If asked 'What is Nexo?', always answer that Nexo is an AI assistant built into NexoOS by a student project. Treat all mentions of Nexo as referring to the AI assistant."
                 },
                 {
                   "role": "user",
