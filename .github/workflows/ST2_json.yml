@@ -1,4 +1,4 @@
-name: Nexo AI Test
+name: Nexo AI
 
 on:
   workflow_dispatch:
@@ -7,7 +7,12 @@ jobs:
   ai:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
+      - uses: actions/checkout@v4
+
       - name: Ask OpenRouter
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEYS }}
@@ -16,15 +21,40 @@ jobs:
             -H "Authorization: Bearer $OPENROUTER_API_KEY" \
             -H "Content-Type: application/json" \
             -d '{
-              "model":"deepseek/deepseek-chat",
-              "messages":[
+              "model": "deepseek/deepseek-chat",
+              "messages": [
                 {
-                  "role":"system",
-                  "content":"You are Nexo AI, the assistant built into NexoOS. You are friendly, helpful, intelligent, and concise. Nexo is an AI project created by a student and is NOT a cryptocurrency platform. Help with coding, schoolwork, learning, science, maths, technology, writing, and creative projects. Explain things clearly and simply. Keep a positive tone."
+                  "role": "system",
+                  "content": "You are Nexo AI, a helpful AI assistant. Nexo is not a cryptocurrency company."
                 },
                 {
-                  "role":"user",
-                  "content":"What is Nexo?"
+                  "role": "user",
+                  "content": "What is Nexo?"
                 }
               ]
-            }'
+            }' > result.json
+
+      - name: Save Response
+        run: |
+          python3 << 'EOF'
+          import json
+
+          with open("result.json", "r") as f:
+              data = json.load(f)
+
+          reply = data["choices"][0]["message"]["content"]
+
+          with open("response.json", "w") as f:
+              json.dump({"response": reply}, f, indent=2)
+
+          print(reply)
+          EOF
+
+      - name: Commit Response
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add response.json
+          git commit -m "Update AI response" || true
+          git push
