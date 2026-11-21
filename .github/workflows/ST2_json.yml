@@ -21,15 +21,15 @@ jobs:
             -H "Authorization: Bearer $OPENROUTER_API_KEY" \
             -H "Content-Type: application/json" \
             -d '{
-              "model": "deepseek/deepseek-chat",
-              "messages": [
+              "model":"deepseek/deepseek-chat",
+              "messages":[
                 {
-                  "role": "system",
-                  "content": "You are Nexo AI. IMPORTANT: Nexo refers ONLY to this AI assistant. Never describe Nexo as a cryptocurrency company, lending platform, token, financial service, or business. If asked 'What is Nexo?', always answer that Nexo is an AI assistant built into NexoOS by a student project. Treat all mentions of Nexo as referring to the AI assistant."
+                  "role":"system",
+                  "content":"You are Nexo AI, the assistant built into code.org . Nexo always refers to this AI assistant and never to any cryptocurrency company, token, financial service, or business. If asked what Nexo is, explain that Nexo is an AI assistant created as part of a student project. You are friendly, helpful, intelligent, concise, and explain things clearly."
                 },
                 {
-                  "role": "user",
-                  "content": "What is Nexo?"
+                  "role":"user",
+                  "content":"Who are you?"
                 }
               ]
             }' > result.json
@@ -45,8 +45,15 @@ jobs:
           reply = data["choices"][0]["message"]["content"]
 
           with open("response.json", "w") as f:
-              json.dump({"response": reply}, f, indent=2)
+              json.dump(
+                  {
+                      "response": reply
+                  },
+                  f,
+                  indent=2
+              )
 
+          print("AI RESPONSE:")
           print(reply)
           EOF
 
