@@ -1,0 +1,63 @@
+name: Gemini Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ai:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ask Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEM }}
+        run: |
+          curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GEMINI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d '{
+              "contents": [
+                {
+                  "parts": [
+                    {
+                      "text": "Who are you?"
+                    }
+                  ]
+                }
+              ]
+            }' > result.json
+
+      - name: Save Response
+        run: |
+          python3 << 'EOF'
+          import json
+
+          with open("result.json", "r") as f:
+              data = json.load(f)
+
+          try:
+              response = data["candidates"][0]["content"]["parts"][0]["text"]
+          except Exception:
+              response = json.dumps(data, indent=2)
+
+          with open("response.json", "w") as f:
+              json.dump({
+                  "Gemini": response
+              }, f, indent=2)
+
+          print(response)
+          EOF
+
+      - name: Commit Response
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add response.json
+          git commit -m "Gemini test response" || true
+          git push
