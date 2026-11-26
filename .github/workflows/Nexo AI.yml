@@ -21,7 +21,8 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Ask Nexo AI
         env:
@@ -30,7 +31,6 @@ jobs:
         run: |
           python3 << 'EOF'
           import requests
-          import json
           import os
 
           model = "${{ github.event.inputs.model }}"
@@ -62,59 +62,57 @@ jobs:
 
               if model == "DeepSeek":
 
-                  r = requests.post(
+                  response = requests.post(
                       "https://openrouter.ai/api/v1/chat/completions",
                       headers={
                           "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
                           "Content-Type": "application/json"
                       },
                       json={
-                          "model":"deepseek/deepseek-chat",
-                          "messages":[
+                          "model": "deepseek/deepseek-chat",
+                          "messages": [
                               {
-                                  "role":"system",
-                                  "content":SYSTEM_PROMPT
+                                  "role": "system",
+                                  "content": SYSTEM_PROMPT
                               },
                               {
-                                  "role":"user",
-                                  "content":prompt
+                                  "role": "user",
+                                  "content": prompt
                               }
                           ]
                       }
                   )
 
-                  data = r.json()
-                  result = data["choices"][0]["message"]["content"]
+                  result = response.json()["choices"][0]["message"]["content"]
 
               elif model == "GPT":
 
-                  r = requests.post(
+                  response = requests.post(
                       "https://openrouter.ai/api/v1/chat/completions",
                       headers={
                           "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
                           "Content-Type": "application/json"
                       },
                       json={
-                          "model":"openai/gpt-4o-mini",
-                          "messages":[
+                          "model": "openai/gpt-4o-mini",
+                          "messages": [
                               {
-                                  "role":"system",
-                                  "content":SYSTEM_PROMPT
+                                  "role": "system",
+                                  "content": SYSTEM_PROMPT
                               },
                               {
-                                  "role":"user",
-                                  "content":prompt
+                                  "role": "user",
+                                  "content": prompt
                               }
                           ]
                       }
                   )
 
-                  data = r.json()
-                  result = data["choices"][0]["message"]["content"]
+                  result = response.json()["choices"][0]["message"]["content"]
 
               elif model == "Gemini":
 
-                  r = requests.post(
+                  response = requests.post(
                       f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={os.environ['GEMINI_API_KEY']}",
                       headers={
                           "Content-Type":"application/json"
@@ -132,40 +130,20 @@ jobs:
                       }
                   )
 
-                  data = r.json()
+                  data = response.json()
 
                   try:
                       result = data["candidates"][0]["content"]["parts"][0]["text"]
                   except:
-                      result = json.dumps(data)
+                      result = str(data)
 
-              with open("response.json","w") as f:
-                  json.dump(
-                      {
-                          "model": model,
-                          "prompt": prompt,
-                          "response": result
-                      },
-                      f,
-                      indent=2
-                  )
-
-              print(result)
+              with open("response.txt", "w", encoding="utf-8") as f:
+                  f.write(result)
 
           except Exception as e:
 
-              with open("response.json","w") as f:
-                  json.dump(
-                      {
-                          "model": model,
-                          "prompt": prompt,
-                          "response": str(e)
-                      },
-                      f,
-                      indent=2
-                  )
-
-              print(e)
+              with open("response.txt", "w", encoding="utf-8") as f:
+                  f.write("ERROR:\n" + str(e))
 
           EOF
 
@@ -174,6 +152,8 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          git add response.json
-          git commit -m "Nexo AI Response" || true
+          git add response.txt
+
+          git commit -m "Nexo AI response" || true
+
           git push
