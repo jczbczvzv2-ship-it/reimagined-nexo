@@ -4,14 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       model:
-        description: "AI Model"
+        description: AI Model
         required: true
-        default: "Gemini"
-
+        default: Gemini
       prompt:
-        description: "Prompt"
+        description: Prompt
         required: true
-        default: "Hello"
+        default: Hello
 
 jobs:
   ai:
@@ -21,8 +20,7 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Ask Nexo AI
         env:
@@ -37,22 +35,21 @@ jobs:
           prompt = "${{ github.event.inputs.prompt }}"
 
           SYSTEM_PROMPT = """
-          You are Nexo AI, the intelligent assistant built into Android Phone.
+          You are Nexo AI, the built-in assistant of Android Phone.
 
-          You help users with:
+          You help with:
           - Coding
           - Schoolwork
           - Research
           - Technology
-          - Productivity
           - Creativity
           - General questions
 
           Rules:
-          - Be friendly and helpful.
+          - Be friendly.
+          - Be helpful.
           - Explain clearly.
-          - Give accurate answers.
-          - Never identify Nexo as a cryptocurrency company.
+          - Never describe Nexo as a cryptocurrency company.
           - Nexo always refers to Nexo AI.
           """
 
@@ -62,57 +59,57 @@ jobs:
 
               if model == "DeepSeek":
 
-                  response = requests.post(
+                  r = requests.post(
                       "https://openrouter.ai/api/v1/chat/completions",
                       headers={
                           "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
                           "Content-Type": "application/json"
                       },
                       json={
-                          "model": "deepseek/deepseek-chat",
-                          "messages": [
+                          "model":"deepseek/deepseek-chat",
+                          "messages":[
                               {
-                                  "role": "system",
-                                  "content": SYSTEM_PROMPT
+                                  "role":"system",
+                                  "content":SYSTEM_PROMPT
                               },
                               {
-                                  "role": "user",
-                                  "content": prompt
+                                  "role":"user",
+                                  "content":prompt
                               }
                           ]
                       }
                   )
 
-                  result = response.json()["choices"][0]["message"]["content"]
+                  result = r.json()["choices"][0]["message"]["content"]
 
               elif model == "GPT":
 
-                  response = requests.post(
+                  r = requests.post(
                       "https://openrouter.ai/api/v1/chat/completions",
                       headers={
                           "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
                           "Content-Type": "application/json"
                       },
                       json={
-                          "model": "openai/gpt-4o-mini",
-                          "messages": [
+                          "model":"openai/gpt-4o-mini",
+                          "messages":[
                               {
-                                  "role": "system",
-                                  "content": SYSTEM_PROMPT
+                                  "role":"system",
+                                  "content":SYSTEM_PROMPT
                               },
                               {
-                                  "role": "user",
-                                  "content": prompt
+                                  "role":"user",
+                                  "content":prompt
                               }
                           ]
                       }
                   )
 
-                  result = response.json()["choices"][0]["message"]["content"]
+                  result = r.json()["choices"][0]["message"]["content"]
 
               elif model == "Gemini":
 
-                  response = requests.post(
+                  r = requests.post(
                       f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={os.environ['GEMINI_API_KEY']}",
                       headers={
                           "Content-Type":"application/json"
@@ -130,7 +127,7 @@ jobs:
                       }
                   )
 
-                  data = response.json()
+                  data = r.json()
 
                   try:
                       result = data["candidates"][0]["content"]["parts"][0]["text"]
@@ -153,7 +150,5 @@ jobs:
           git config user.email "actions@github.com"
 
           git add response.txt
-
-          git commit -m "Nexo AI response" || true
-
+          git commit -m "Nexo AI Response" || true
           git push
