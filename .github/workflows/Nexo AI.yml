@@ -1,26 +1,121 @@
-name: Ask OpenRouter
+name: Nexo AI
 
 on:
   workflow_dispatch:
+    inputs:
+      model:
+        description: "Model"
+        required: true
+        default: "DeepSeek"
+
+      prompt:
+        description: "Prompt"
+        required: true
+        default: "Who are you?"
 
 jobs:
   ai:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      issues: write
+
     steps:
-      - name: Ask OpenRouter
+      - name: Ask AI
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEYS }}
+          GEMINI_API_KEY: ${{ secrets.GEM }}
         run: |
-          curl https://openrouter.ai/api/v1/chat/completions \
-            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "model":"deepseek/deepseek-chat",
-              "messages":[
-                {
-                  "role":"user",
-                  "content":"Hello"
-                }
-              ]
-            }'
+          python3 << 'EOF'
+          import requests
+          import json
+          import os
+
+          model = "${{ github.event.inputs.model }}"
+          prompt = "${{ github.event.inputs.prompt }}"
+
+          result = ""
+
+          try:
+
+              if model == "DeepSeek":
+
+                  r = requests.post(
+                      "https://openrouter.ai/api/v1/chat/completions",
+                      headers={
+                          "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
+                          "Content-Type":"application/json"
+                      },
+                      json={
+                          "model":"deepseek/deepseek-chat",
+                          "messages":[
+                              {"role":"user","content":prompt}
+                          ]
+                      }
+                  )
+
+                  result = r.json()["choices"][0]["message"]["content"]
+
+              elif model == "GPT":
+
+                  r = requests.post(
+                      "https://openrouter.ai/api/v1/chat/completions",
+                      headers={
+                          "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
+                          "Content-Type":"application/json"
+                      },
+                      json={
+                          "model":"openai/gpt-4o-mini",
+                          "messages":[
+                              {"role":"user","content":prompt}
+                          ]
+                      }
+                  )
+
+                  result = r.json()["choices"][0]["message"]["content"]
+
+              elif model == "Gemini":
+
+                  r = requests.post(
+                      f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={os.environ['GEMINI_API_KEY']}",
+                      headers={
+                          "Content-Type":"application/json"
+                      },
+                      json={
+                          "contents":[
+                              {
+                                  "parts":[
+                                      {
+                                          "text":prompt
+                                      }
+                                  ]
+                              }
+                          ]
+                      }
+                  )
+
+                  data = r.json()
+
+                  try:
+                      result = data["candidates"][0]["content"]["parts"][0]["text"]
+                  except:
+                      result = json.dumps(data)
+
+              with open("reply.txt","w") as f:
+                  f.write(result)
+
+          except Exception as e:
+              with open("reply.txt","w") as f:
+                  f.write(str(e))
+          EOF
+
+      - name: Update Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BODY=$(cat reply.txt)
+
+          gh issue edit 1 \
+            --repo jczbczvzv2-ship-it/reimagined-nexo \
+            --body "$BODY"
