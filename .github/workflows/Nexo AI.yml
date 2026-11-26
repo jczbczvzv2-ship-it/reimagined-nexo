@@ -4,25 +4,26 @@ on:
   workflow_dispatch:
     inputs:
       model:
-        description: "Model"
+        description: "AI Model"
         required: true
-        default: "DeepSeek"
+        default: "Gemini"
 
       prompt:
         description: "Prompt"
         required: true
-        default: "Who are you?"
+        default: "Hello"
 
 jobs:
   ai:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
-      issues: write
+      contents: write
 
     steps:
-      - name: Ask AI
+      - uses: actions/checkout@v4
+
+      - name: Ask Nexo AI
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEYS }}
           GEMINI_API_KEY: ${{ secrets.GEM }}
@@ -35,6 +36,26 @@ jobs:
           model = "${{ github.event.inputs.model }}"
           prompt = "${{ github.event.inputs.prompt }}"
 
+          SYSTEM_PROMPT = """
+          You are Nexo AI, the intelligent assistant built into Android Phone.
+
+          You help users with:
+          - Coding
+          - Schoolwork
+          - Research
+          - Technology
+          - Productivity
+          - Creativity
+          - General questions
+
+          Rules:
+          - Be friendly and helpful.
+          - Explain clearly.
+          - Give accurate answers.
+          - Never identify Nexo as a cryptocurrency company.
+          - Nexo always refers to Nexo AI.
+          """
+
           result = ""
 
           try:
@@ -45,17 +66,25 @@ jobs:
                       "https://openrouter.ai/api/v1/chat/completions",
                       headers={
                           "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
-                          "Content-Type":"application/json"
+                          "Content-Type": "application/json"
                       },
                       json={
                           "model":"deepseek/deepseek-chat",
                           "messages":[
-                              {"role":"user","content":prompt}
+                              {
+                                  "role":"system",
+                                  "content":SYSTEM_PROMPT
+                              },
+                              {
+                                  "role":"user",
+                                  "content":prompt
+                              }
                           ]
                       }
                   )
 
-                  result = r.json()["choices"][0]["message"]["content"]
+                  data = r.json()
+                  result = data["choices"][0]["message"]["content"]
 
               elif model == "GPT":
 
@@ -63,17 +92,25 @@ jobs:
                       "https://openrouter.ai/api/v1/chat/completions",
                       headers={
                           "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
-                          "Content-Type":"application/json"
+                          "Content-Type": "application/json"
                       },
                       json={
                           "model":"openai/gpt-4o-mini",
                           "messages":[
-                              {"role":"user","content":prompt}
+                              {
+                                  "role":"system",
+                                  "content":SYSTEM_PROMPT
+                              },
+                              {
+                                  "role":"user",
+                                  "content":prompt
+                              }
                           ]
                       }
                   )
 
-                  result = r.json()["choices"][0]["message"]["content"]
+                  data = r.json()
+                  result = data["choices"][0]["message"]["content"]
 
               elif model == "Gemini":
 
@@ -87,7 +124,7 @@ jobs:
                               {
                                   "parts":[
                                       {
-                                          "text":prompt
+                                          "text": SYSTEM_PROMPT + "\n\nUser: " + prompt
                                       }
                                   ]
                               }
@@ -102,20 +139,41 @@ jobs:
                   except:
                       result = json.dumps(data)
 
-              with open("reply.txt","w") as f:
-                  f.write(result)
+              with open("response.json","w") as f:
+                  json.dump(
+                      {
+                          "model": model,
+                          "prompt": prompt,
+                          "response": result
+                      },
+                      f,
+                      indent=2
+                  )
+
+              print(result)
 
           except Exception as e:
-              with open("reply.txt","w") as f:
-                  f.write(str(e))
+
+              with open("response.json","w") as f:
+                  json.dump(
+                      {
+                          "model": model,
+                          "prompt": prompt,
+                          "response": str(e)
+                      },
+                      f,
+                      indent=2
+                  )
+
+              print(e)
+
           EOF
 
-      - name: Update Issue
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Commit Response
         run: |
-          BODY=$(cat reply.txt)
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
 
-          gh issue edit 1 \
-            --repo jczbczvzv2-ship-it/reimagined-nexo \
-            --body "$BODY"
+          git add response.json
+          git commit -m "Nexo AI Response" || true
+          git push
